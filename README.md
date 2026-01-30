@@ -2,7 +2,7 @@
 
 A realtime event infrastructure platform similar to Segment, designed for modern SaaS and web applications. Built with Go backend, React frontend, and enterprise-grade observability.
 
-## 🏗️ Architecture Overview
+##  Architecture Overview
 
 The system consists of microservices:
 
@@ -33,7 +33,7 @@ The system consists of microservices:
 - Dead-letter queues for unprocessable events
 - Circuit breakers for downstream services
 
-## 🚀 Quick Start
+##  Quick Start
 
 ### Prerequisites
 - Docker & Docker Compose
@@ -56,7 +56,7 @@ go run cmd/ingestion/main.go
 cd web && npm install && npm start
 ```
 
-## 📊 API Contract
+##  API Contract
 
 ### Event Ingestion
 ```http
@@ -85,7 +85,7 @@ Authorization: Bearer <api_key>
 [{"event_name": "..."}, ...]
 ```
 
-## 🗄️ Database Schema
+##  Database Schema
 
 ### Events Table (TimescaleDB)
 ```sql
@@ -113,20 +113,20 @@ CREATE TABLE aggregates (
 );
 ```
 
-## 🔐 Authentication
+##  Authentication
 
 - API Key per project
 - JWT for dashboard access
 - RBAC: admin, developer, viewer
 
-## 📈 Observability
+##  Observability
 
 - Metrics: Prometheus (/metrics)
 - Tracing: Jaeger
 - Logging: Structured JSON logs
 - Health: /health endpoint
 
-## 🧪 Testing
+##  Testing
 
 ```bash
 # Unit tests
@@ -136,19 +136,19 @@ go test ./...
 docker-compose -f docker-compose.test.yml up
 ```
 
-## 📚 Documentation
+##  Documentation
 
 - [API Docs](./docs/api.md)
 - [Architecture](./docs/architecture.md)
 - [Deployment](./docs/deployment.md)
 
-## 🤝 Contributing
+##  Contributing
 
 1. Fork the repo
 2. Create feature branch
 3. Add tests
 4. Submit PR
 
-## 📄 License
+##  License
 
 MIT License# Realtime-Event-Infrastructure-for-Web-Apps
