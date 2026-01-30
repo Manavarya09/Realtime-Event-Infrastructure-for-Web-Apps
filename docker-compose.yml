@@ -1,0 +1,80 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: timescale/timescaledb:latest-pg15
+    environment:
+      POSTGRES_DB: events
+      POSTGRES_USER: user
+      POSTGRES_PASSWORD: pass
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./migrations:/docker-entrypoint-initdb.d
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+
+  ingestion:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.ingestion
+    ports:
+      - "8080:8080"
+    environment:
+      DATABASE_URL: postgres://user:pass@postgres:5432/events?sslmode=disable
+      REDIS_URL: redis://redis:6379
+    depends_on:
+      - postgres
+      - redis
+
+  processing:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.processing
+    environment:
+      DATABASE_URL: postgres://user:pass@postgres:5432/events?sslmode=disable
+      REDIS_URL: redis://redis:6379
+    depends_on:
+      - postgres
+      - redis
+
+  webhooks:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.webhooks
+    environment:
+      DATABASE_URL: postgres://user:pass@postgres:5432/events?sslmode=disable
+      REDIS_URL: redis://redis:6379
+    depends_on:
+      - postgres
+      - redis
+
+  analytics:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.analytics
+    ports:
+      - "8081:8081"
+    environment:
+      DATABASE_URL: postgres://user:pass@postgres:5432/events?sslmode=disable
+    depends_on:
+      - postgres
+
+  frontend:
+    build:
+      context: ./web
+      dockerfile: ../docker/Dockerfile.frontend
+    ports:
+      - "3000:3000"
+    depends_on:
+      - analytics
+
+volumes:
+  postgres_data:
+  redis_data:
