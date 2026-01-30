@@ -1,0 +1,39 @@
+package models
+package models
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+}	ExpiresAt *time.Time `db:"expires_at"`	Name      string    `db:"name"`	KeyHash   string    `db:"key_hash"`	ProjectID string    `db:"project_id"`	ID        string    `db:"id"`type APIKey struct {}	Events []EventRequest `json:"events" binding:"required,max=100"`type BatchEventRequest struct {}	IdempotencyKey *string                `json:"idempotency_key,omitempty"`	Metadata       map[string]interface{} `json:"metadata,omitempty"`	Timestamp      *time.Time             `json:"timestamp,omitempty"`	UserID         *string                `json:"user_id,omitempty"`	EventName      string                 `json:"event_name" binding:"required"`type EventRequest struct {}	IdempotencyKey *string                `json:"idempotency_key,omitempty" db:"idempotency_key"`	UserAgent      *string                `json:"user_agent,omitempty" db:"user_agent"`	IPAddress      *string                `json:"ip_address,omitempty" db:"ip_address"`	ReceivedAt     time.Time              `json:"received_at" db:"received_at"`	Metadata       map[string]interface{} `json:"metadata,omitempty" db:"metadata"`	Timestamp      time.Time              `json:"timestamp" db:"timestamp"`	UserID         *string                `json:"user_id,omitempty" db:"user_id"`	EventName      string                 `json:"event_name" db:"event_name" validate:"required,max=100"`	ProjectID      string                 `json:"project_id" db:"project_id"`	ID             string                 `json:"id" db:"id"`type Event struct {)	"time"import (
