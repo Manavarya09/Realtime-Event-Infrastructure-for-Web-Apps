@@ -1,99 +1,100 @@
 package services
-package services
 
 import (
 	"context"
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-}	return key.ProjectID, nil	}		return "", fmt.Errorf("API key expired")	if key.ExpiresAt != nil && key.ExpiresAt.Before(time.Now()) {	}		return "", fmt.Errorf("invalid API key")	if err != nil {	key, err := s.store.GetAPIKeyByHash(ctx, hashStr)	hashStr := fmt.Sprintf("%x", hash)	hash := sha256.Sum256([]byte(apiKey))func (s *EventService) AuthenticateAPIKey(ctx context.Context, apiKey string) (string, error) {}	return nil	// Add more validation as needed	}		return fmt.Errorf("event_name too long")	if len(event.EventName) > 100 {	}		return fmt.Errorf("event_name is required")	if event.EventName == "" {func (s *EventService) validateEvent(event *models.Event) error {}	return event, nil	s.logger.Infow("Event processed", "event_id", event.ID, "event_name", event.EventName)	}		// Don't return error, event is already stored		s.logger.Errorw("Failed to queue event", "error", err, "event_id", event.ID)	if err := s.queue.PublishEvent(ctx, event); err != nil {	// Queue for processing	}		return nil, err		s.logger.Errorw("Failed to store event", "error", err, "event_id", event.ID)	if err := s.store.InsertEvent(ctx, event); err != nil {	// Store event	}		return nil, err	if err := s.validateEvent(event); err != nil {	// Validate and enrich	}		event.Timestamp = time.Now()	} else {		event.Timestamp = *req.Timestamp	if req.Timestamp != nil {	// Set timestamp	}		IdempotencyKey: req.IdempotencyKey,		UserAgent:  &userAgent,		IPAddress:  &ip.String(),		ReceivedAt: time.Now(),		Metadata:  req.Metadata,		UserID:    req.UserID,		EventName: req.EventName,		ProjectID: projectID,		ID:        uuid.New().String(),	event := &models.Event{	// Create eventfunc (s *EventService) ProcessEvent(ctx context.Context, req *models.EventRequest, projectID string, ip net.IP, userAgent string) (*models.Event, error) {}	}		logger: logger,		queue:  queue,		store:  store,	return &EventService{func NewEventService(store storage.EventStore, queue queue.EventQueue, logger *zap.SugaredLogger) *EventService {}	logger *zap.SugaredLogger	queue  queue.EventQueue	store  storage.EventStoretype EventService struct {)	"go.uber.org/zap"	"github.com/google/uuid"	"time"	"realtime-events/pkg/storage"	"realtime-events/pkg/queue"	"realtime-events/internal/models"	"net"	"fmt"	"crypto/sha256"
+	"crypto/sha256"
+	"fmt"
+	"net"
+	"time"
+
+	"github.com/google/uuid"
+	"go.uber.org/zap"
+
+	"realtime-events/internal/models"
+	"realtime-events/pkg/queue"
+	"realtime-events/pkg/storage"
+)
+
+type EventService struct {
+	store  storage.EventStore
+	queue  queue.EventQueue
+	logger *zap.SugaredLogger
+}
+
+func NewEventService(store storage.EventStore, queue queue.EventQueue, logger *zap.SugaredLogger) *EventService {
+	return &EventService{
+		store:  store,
+		queue:  queue,
+		logger: logger,
+	}
+}
+
+func (s *EventService) ProcessEvent(ctx context.Context, req *models.EventRequest, projectID string, ip net.IP, userAgent string) (*models.Event, error) {
+	// Create event
+	ipStr := ip.String()
+	event := &models.Event{
+		ID:             uuid.New().String(),
+		ProjectID:      projectID,
+		EventName:      req.EventName,
+		UserID:         req.UserID,
+		Metadata:       req.Metadata,
+		ReceivedAt:     time.Now(),
+		IPAddress:      &ipStr,
+		UserAgent:      &userAgent,
+		IdempotencyKey: req.IdempotencyKey,
+	}
+
+	// Set timestamp
+	if req.Timestamp != nil {
+		event.Timestamp = *req.Timestamp
+	} else {
+		event.Timestamp = time.Now()
+	}
+
+	// Validate and enrich
+	if err := s.validateEvent(event); err != nil {
+		return nil, err
+	}
+
+	// Store event
+	if err := s.store.InsertEvent(ctx, event); err != nil {
+		s.logger.Errorw("Failed to store event", "error", err, "event_id", event.ID)
+		return nil, err
+	}
+
+	// Queue for processing
+	if err := s.queue.PublishEvent(ctx, event); err != nil {
+		s.logger.Errorw("Failed to queue event", "error", err, "event_id", event.ID)
+		// Don't return error, event is already stored
+	}
+
+	s.logger.Infow("Event processed", "event_id", event.ID, "event_name", event.EventName)
+	return event, nil
+}
+
+func (s *EventService) validateEvent(event *models.Event) error {
+	if event.EventName == "" {
+		return fmt.Errorf("event_name is required")
+	}
+	if len(event.EventName) > 100 {
+		return fmt.Errorf("event_name too long")
+	}
+	// Add more validation as needed
+	return nil
+}
+
+func (s *EventService) AuthenticateAPIKey(ctx context.Context, apiKey string) (string, error) {
+	hash := sha256.Sum256([]byte(apiKey))
+	hashStr := fmt.Sprintf("%x", hash)
+
+	key, err := s.store.GetAPIKeyByHash(ctx, hashStr)
+	if err != nil {
+		return "", fmt.Errorf("invalid API key")
+	}
+
+	if key.ExpiresAt != nil && key.ExpiresAt.Before(time.Now()) {
+		return "", fmt.Errorf("API key expired")
+	}
+
+	return key.ProjectID, nil
+}

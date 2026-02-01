@@ -1,36 +1,35 @@
 package observability
-package observability
 
 import (
+	"net/http"
 
+	"github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
+)
 
+var (
+	EventsProcessed = prometheus.NewCounterVec(
+		prometheus.CounterOpts{
+			Name: "events_processed_total",
+			Help: "Total number of events processed",
+		},
+		[]string{"event_name", "status"},
+	)
 
+	RequestDuration = prometheus.NewHistogramVec(
+		prometheus.HistogramOpts{
+			Name:    "http_request_duration_seconds",
+			Help:    "HTTP request duration in seconds",
+			Buckets: prometheus.DefBuckets,
+		},
+		[]string{"method", "path", "status"},
+	)
+)
 
+func init() {
+	prometheus.MustRegister(EventsProcessed, RequestDuration)
+}
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-}	return promhttp.Handler()func MetricsHandler() http.Handler {}	prometheus.MustRegister(EventsProcessed, RequestDuration)func init() {)	)		[]string{"method", "path", "status"},		},			Buckets: prometheus.DefBuckets,			Help:    "HTTP request duration in seconds",			Name:    "http_request_duration_seconds",		prometheus.HistogramOpts{	RequestDuration = prometheus.NewHistogramVec(	)		[]string{"event_name", "status"},		},			Help: "Total number of events processed",			Name: "events_processed_total",		prometheus.CounterOpts{	EventsProcessed = prometheus.NewCounterVec(var ()	"github.com/prometheus/client_golang/prometheus/promhttp"	"github.com/prometheus/client_golang/prometheus"	"net/http"
+func MetricsHandler() http.Handler {
+	return promhttp.Handler()
+}

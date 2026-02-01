@@ -48,6 +48,7 @@ func main() {
 
 	// Initialize services
 	eventService := services.NewEventService(db, eventQueue, sugar)
+	healthService := services.NewHealthService(db, sugar)
 
 	// Initialize handlers
 	eventHandler := handlers.NewEventHandler(eventService, sugar)
@@ -64,11 +65,16 @@ func main() {
 
 	// Health check
 	router.GET("/health", func(c *gin.Context) {
-		c.JSON(http.StatusOK, gin.H{"status": "healthy"})
+		health := healthService.CheckHealth(c.Request.Context())
+		statusCode := 200
+		if health.Status != "healthy" {
+			statusCode = 503
+		}
+		c.JSON(statusCode, health)
 	})
 
 	// Metrics
-	router.GET("/metrics", observability.MetricsHandler())
+	router.GET("/metrics", gin.WrapH(observability.MetricsHandler()))
 
 	// API routes
 	v1 := router.Group("/api/v1")
